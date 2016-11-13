@@ -123,6 +123,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             String sbprint = sb.substring(0, endOfLineIndex);               // то извлекаем строку
                             sb.delete(0, sb.length());                                      // и очищаем sb
                             tvLog.setText(sbprint);
+                            if(sbprint.startsWith("l")) {
+                                tvLeftDis.setText(sbprint.substring(1, sbprint.length()));
+                            } else if(sbprint.startsWith("r")) {
+                                tvRightDis.setText(sbprint.substring(1, sbprint.length()));
+                            }
                         }
                         //Log.d(TAG, "...Строка:"+ sb.toString() +  "Байт:" + msg.arg1 + "...");
                         break;
