@@ -325,7 +325,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String com = null;
         switch (v.getId()) {
             case R.id.btnUp:
-                com = "u";
+                com = "r456q";
                 break;
             case R.id.btnDown:
                 com = "d";
@@ -343,6 +343,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    private void showToast(byte b) {
+        Toast.makeText(getApplicationContext(), String.valueOf((char)b), Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getApplicationContext(), String.valueOf(b), Toast.LENGTH_SHORT).show();
+    }
 
     private class ConnectedThread extends Thread {
         private final BluetoothSocket mmSocket;
@@ -386,7 +390,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.d(TAG, "...Данные для отправки: " + message + "...");
             byte[] msgBuffer = message.getBytes();
             try {
-                mmOutStream.write(msgBuffer);
+                for(int i = 0; i < message.length(); ++i) {
+                    mmOutStream.write(msgBuffer[i]);
+                    showToast(msgBuffer[i]);
+                }
             } catch (IOException e) {
                 Log.d(TAG, "...Ошибка отправки данных: " + e.getMessage() + "...");
             }
