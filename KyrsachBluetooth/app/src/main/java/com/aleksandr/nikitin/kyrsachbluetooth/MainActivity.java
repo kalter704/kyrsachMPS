@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,12 +15,15 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.larswerkman.holocolorpicker.ColorPicker;
+import com.larswerkman.holocolorpicker.SVBar;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, ColorPicker.OnColorChangedListener, ColorPicker.OnColorSelectedListener {
     private static final String TAG = "bluetooth1";
 
     private StringBuilder sb = new StringBuilder();
@@ -29,6 +33,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView tvLeftDis;
     private TextView tvRightDis;
     private TextView tvLog;
+
+    private ColorPicker picker;
+    private SVBar svBar;
+
+    private TextView tvRed;
+    private TextView tvGreen;
+    private TextView tvBlue;
 
     Handler h;
 
@@ -45,19 +56,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private boolean isConnected = false;
 
     // SPP UUID сервиса
-    //private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     // MAC-адрес Bluetooth модуля
     private static String address = "98:D3:31:FC:43:92";
 
-    /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
 
+        /*
         tvLeftDis = (TextView) findViewById(R.id.tvLeftDis);
         tvRightDis = (TextView) findViewById(R.id.tvRightDis);
         tvLog = (TextView) findViewById(R.id.tvLog);
@@ -66,25 +76,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btnDown).setOnClickListener(this);
         findViewById(R.id.btnLeft).setOnClickListener(this);
         findViewById(R.id.btnRight).setOnClickListener(this);
+        */
 
-        btnSendPass = (Button) findViewById(R.id.btnSendPass);
+        //btnSendPass = (Button) findViewById(R.id.btnSendPass);
 
-        btnOnGreen = (Button) findViewById(R.id.btnGreenOn);
+        //btnOnGreen = (Button) findViewById(R.id.btnGreenOn);
         //btnOnBlue = (Button) findViewById(R.id.btnBlueOn);
-        btnOffAll = (Button) findViewById(R.id.btnOffAll);
+        //btnOffAll = (Button) findViewById(R.id.btnOffAll);
 
         chBoxIsConn = (CheckBox) findViewById(R.id.chBoxIsConn);
 
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         checkBTState();
 
+        /*
         btnOnGreen.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                //sendData("12");
                 mConnectedThread.write("2");
                 //Toast.makeText(getBaseContext(), "Включаем LED", Toast.LENGTH_SHORT).show();
             }
         });
+        */
 
         /*
         btnOnBlue.setOnClickListener(new View.OnClickListener() {
@@ -95,9 +107,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
         */
 
+        /*
         btnOffAll.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                //sendData("0");
                 mConnectedThread.write("0");
                 //Toast.makeText(getBaseContext(), "Выключаем LED", Toast.LENGTH_SHORT).show();
             }
@@ -106,10 +118,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnSendPass.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //sendData(String.valueOf(((TextView) findViewById(R.id.edPass)).getText()));
                 mConnectedThread.write(String.valueOf(((TextView) findViewById(R.id.edPass)).getText()));
             }
         });
+        */
+
+        tvRed = (TextView) findViewById(R.id.tvRed);
+        tvGreen = (TextView) findViewById(R.id.tvGreen);
+        tvBlue = (TextView) findViewById(R.id.tvBlue);
+
+        picker = (ColorPicker) findViewById(R.id.picker);
+        svBar = (SVBar) findViewById(R.id.svbar);
+
+        picker.addSVBar(svBar);
+
+        setColorToView();
+
+        //To set the old selected color u can do it like this
+        picker.setOldCenterColor(picker.getColor());
+        // adds listener to the colorpicker which is implemented
+        //in the activity
+        picker.setOnColorChangedListener(this);
+        picker.setOnColorSelectedListener(this);
+
+        //to turn of showing the old color
+        picker.setShowOldCenterColor(false);
+
+
 
         h = new Handler() {
             public void handleMessage(android.os.Message msg) {
@@ -134,87 +169,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             };
         };
-
     }
-
-    /*
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        Log.d(TAG, "...onResume - попытка соединения...");
-
-        // Set up a pointer to the remote node using it's address.
-        BluetoothDevice device = btAdapter.getRemoteDevice(address);
-
-        // Two things are needed to make a connection:
-        //   A MAC address, which we got above.
-        //   A Service ID or UUID.  In this case we are using the
-        //     UUID for SPP.
-        try {
-            btSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
-        } catch (IOException e) {
-            errorExit("Fatal Error", "In onResume() and socket create failed: " + e.getMessage() + ".");
-        }
-
-        // Discovery is resource intensive.  Make sure it isn't going on
-        // when you attempt to connect and pass your message.
-        btAdapter.cancelDiscovery();
-
-        // Establish the connection.  This will block until it connects.
-        Log.d(TAG, "...Соединяемся...");
-        try {
-            btSocket.connect();
-            isConnected = true;
-            Log.d(TAG, "...Соединение установлено и готово к передачи данных...");
-        } catch (IOException e) {
-            isConnected = false;
-            //errorExit("Fatal Error", "In onResume() and unable to close socket during connection failure" + e.getMessage() + ".");
-            try {
-                btSocket.close();
-            } catch (IOException e2) {
-                errorExit("Fatal Error", "In onResume() and unable to close socket during connection failure" + e2.getMessage() + ".");
-            }
-        }
-
-        // Create a data stream so we can talk to server.
-        Log.d(TAG, "...Создание Socket...");
-
-        try {
-            outStream = btSocket.getOutputStream();
-        } catch (IOException e) {
-            errorExit("Fatal Error", "In onResume() and output stream creation failed:" + e.getMessage() + ".");
-        }
-
-        if(isConnected) {
-            chBoxIsConn.setChecked(true);
-        } else {
-            chBoxIsConn.setChecked(false);
-        }
-
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-
-        Log.d(TAG, "...In onPause()...");
-
-        if (outStream != null) {
-            try {
-                outStream.flush();
-            } catch (IOException e) {
-                errorExit("Fatal Error", "In onPause() and failed to flush output stream: " + e.getMessage() + ".");
-            }
-        }
-
-        try     {
-            btSocket.close();
-        } catch (IOException e2) {
-            errorExit("Fatal Error", "In onPause() and failed to close socket." + e2.getMessage() + ".");
-        }
-    }
-    */
 
     @Override
     public void onResume() {
@@ -301,28 +256,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         finish();
     }
 
-    /*
-    private void sendData(String message) {
-        byte[] msgBuffer = message.getBytes();
-
-        Log.d(TAG, "...Посылаем данные: " + message + "...");
-
-        try {
-            outStream.write(msgBuffer);
-        } catch (IOException e) {
-            String msg = "In onResume() and an exception occurred during write: " + e.getMessage();
-            if (address.equals("00:00:00:00:00:00"))
-                msg = msg + ".\n\nВ переменной address у вас прописан 00:00:00:00:00:00, вам необходимо прописать реальный MAC-адрес Bluetooth модуля";
-            msg = msg +  ".\n\nПроверьте поддержку SPP UUID: " + MY_UUID.toString() + " на Bluetooth модуле, к которому вы подключаетесь.\n\n";
-
-            errorExit("Fatal Error", msg);
-        }
-    }
-    */
-
     @Override
     public void onClick(View v) {
         String com = null;
+        /*
         switch (v.getId()) {
             case R.id.btnUp:
                 com = "r456q";
@@ -337,15 +274,74 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 com = "r";
                 break;
         }
+        */
         if(com != null) {
-            //sendData(com);
             mConnectedThread.write(com);
         }
     }
 
     private void showToast(byte b) {
         Toast.makeText(getApplicationContext(), String.valueOf((char)b), Toast.LENGTH_SHORT).show();
-        //Toast.makeText(getApplicationContext(), String.valueOf(b), Toast.LENGTH_SHORT).show();
+    }
+
+    private void setColorToView() {
+        int color = picker.getColor();
+
+        int red = Color.red(color);
+        int green = Color.green(color);
+        int blue = Color.blue(color);
+
+        String redString = String.valueOf(red);
+        String greenString = String.valueOf(green);
+        String blueString = String.valueOf(blue);
+
+        String nowRedString = null;
+        String nowGreenString = null;
+        String nowBlueString = null;
+
+        if(redString.length() == 2) {
+            nowRedString = "r0" + redString + "q";
+        } else if(redString.length() == 1) {
+            nowRedString = "r00" + redString + "q";
+        } else {
+            nowRedString = "r" + redString + "q";
+        }
+
+        if(greenString.length() == 2) {
+            nowGreenString = "g0" + greenString + "q";
+        } else if(greenString.length() == 1) {
+            nowGreenString = "g00" + greenString + "q";
+        } else {
+            nowGreenString = "g" + greenString + "q";
+        }
+
+        if(blueString.length() == 2) {
+            nowBlueString = "b0" + blueString + "q";
+        } else if(blueString.length() == 1) {
+            nowBlueString = "b00" + blueString + "q";
+        } else {
+            nowBlueString = "b" + blueString + "q";
+        }
+
+        tvRed.setText("Red: " + nowRedString);
+        tvGreen.setText("Green: " + nowGreenString);
+        tvBlue.setText("Blue: " + nowBlueString);
+
+        if(isConnected) {
+            mConnectedThread.write(nowRedString);
+            mConnectedThread.write(nowGreenString);
+            mConnectedThread.write(nowBlueString);
+        }
+    }
+
+    @Override
+    public void onColorChanged(int color) {
+        setColorToView();
+    }
+
+    @Override
+    public void onColorSelected(int color) {
+
     }
 
     private class ConnectedThread extends Thread {

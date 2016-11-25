@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
@@ -12,14 +12,56 @@
     android:weightSum="1"
     tools:context="com.aleksandr.nikitin.kyrsachbluetooth.MainActivity">
 
+
+    <com.larswerkman.holocolorpicker.ColorPicker
+        android:id="@+id/picker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/chBoxIsConn"
+        android:layout_centerHorizontal="true" />
+
+    <com.larswerkman.holocolorpicker.SVBar
+        android:id="@+id/svbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/picker"
+        android:layout_centerHorizontal="true" />
+
     <CheckBox
         android:id="@+id/chBoxIsConn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:checked="false"
         android:clickable="false"
-        android:text="Соединение установлено" />
+        android:text="Соединение установлено"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true" />
 
+    <TextView
+        android:text="TextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvRed"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:text="TextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvGreen"
+        android:layout_below="@+id/tvRed"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:text="TextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvBlue"
+        android:layout_below="@+id/tvGreen"
+        android:layout_alignParentStart="true" />
+
+    <!--
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -209,26 +251,6 @@
         android:text="Log"
         android:layout_marginTop="25dp"/>
 
-    <!--
-    <Button
-        android:text="Off all"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/btnOffAll"
-        android:layout_below="@+id/button4"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="126dp" />
+      -->
 
-    <Button
-        android:text="ON Blue"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/btnBlueOn"
-        android:layout_above="@+id/btnGreenOn"
-        android:layout_alignLeft="@+id/btnGreenOn"
-        android:layout_alignStart="@+id/btnGreenOn" />
-
-
-        -->
-</LinearLayout>
+</RelativeLayout>
