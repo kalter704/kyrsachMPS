@@ -1,5 +1,7 @@
 package com.aleksandr.nikitin.kyrsachbluetooth;
 
+import android.app.Dialog;
+import android.app.TimePickerDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -12,15 +14,23 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.RelativeLayout;
+import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.larswerkman.holocolorpicker.ColorPicker;
 import com.larswerkman.holocolorpicker.SVBar;
 
+import org.w3c.dom.Text;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, ColorPicker.OnColorChangedListener, ColorPicker.OnColorSelectedListener {
@@ -34,6 +44,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView tvRightDis;
     private TextView tvLog;
 
+    private int DIALOG_TIME = 1;
+    private int myHour = Integer.valueOf((new SimpleDateFormat("HH")).format(System.currentTimeMillis()));
+    private int myMinute = Integer.valueOf((new SimpleDateFormat("mm")).format(System.currentTimeMillis()));
+
     private ColorPicker picker;
     private SVBar svBar;
 
@@ -41,11 +55,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView tvGreen;
     private TextView tvBlue;
 
-    Handler h;
+    private EditText etTime;
+    private Button btnSetTime;
+
+    private TextView tvState;
+
+    private TextView tvLight;
+    private Switch swLight;
+
+    private Handler h;
 
     private ConnectedThread mConnectedThread;
-
-    private CheckBox chBoxIsConn;
 
     private static final int REQUEST_ENABLE_BT = 1;
     final int RECIEVE_MESSAGE = 1;
@@ -67,61 +87,67 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         setContentView(R.layout.activity_main);
 
-        /*
-        tvLeftDis = (TextView) findViewById(R.id.tvLeftDis);
-        tvRightDis = (TextView) findViewById(R.id.tvRightDis);
-        tvLog = (TextView) findViewById(R.id.tvLog);
+        //etTime = (EditText) findViewById(R.id.etTime);
+        btnSetTime = (Button) findViewById(R.id.btnSetTime);
+        tvState = (TextView) findViewById(R.id.tvState);
+        tvLight = (TextView) findViewById(R.id.tvLight);
+        swLight = (Switch) findViewById(R.id.swLight);
 
-        findViewById(R.id.btnUp).setOnClickListener(this);
-        findViewById(R.id.btnDown).setOnClickListener(this);
-        findViewById(R.id.btnLeft).setOnClickListener(this);
-        findViewById(R.id.btnRight).setOnClickListener(this);
-        */
+        btnSetTime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                myHour = Integer.valueOf((new SimpleDateFormat("HH")).format(System.currentTimeMillis()));
+                myMinute = Integer.valueOf((new SimpleDateFormat("mm")).format(System.currentTimeMillis()));
+                showDialog(DIALOG_TIME);
+                /*
+                String tempStr = etTime.getText().toString();
+                String time = null;
+                switch (tempStr.length()) {
+                    case 1:
+                        time = "000";
+                        break;
+                    case 2:
+                        time = "00";
+                        break;
+                    case 3:
+                        time = "0";
+                        break;
+                    case 4:
+                        time = "";
+                        break;
+                    default:
+                        return;
+                }
+                time += tempStr + 't';
+                if(isConnected) {
+                    mConnectedThread.write(time);
+                }
+                */
+            }
+        });
 
-        //btnSendPass = (Button) findViewById(R.id.btnSendPass);
-
-        //btnOnGreen = (Button) findViewById(R.id.btnGreenOn);
-        //btnOnBlue = (Button) findViewById(R.id.btnBlueOn);
-        //btnOffAll = (Button) findViewById(R.id.btnOffAll);
-
-        chBoxIsConn = (CheckBox) findViewById(R.id.chBoxIsConn);
+        swLight.setChecked(false);
+        swLight.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    tvLight.setText("Светильник ВКЛ");
+                    findViewById(R.id.rlColor).setVisibility(View.VISIBLE);
+                    setColorToView();
+                } else {
+                    tvLight.setText("Светильник ВЫКЛ");
+                    findViewById(R.id.rlColor).setVisibility(View.INVISIBLE);
+                    if (isConnected) {
+                        mConnectedThread.write("r000q");
+                        mConnectedThread.write("g000q");
+                        mConnectedThread.write("b000q");
+                    }
+                }
+            }
+        });
 
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         checkBTState();
-
-        /*
-        btnOnGreen.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                mConnectedThread.write("2");
-                //Toast.makeText(getBaseContext(), "Включаем LED", Toast.LENGTH_SHORT).show();
-            }
-        });
-        */
-
-        /*
-        btnOnBlue.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                sendData("2");
-                //Toast.makeText(getBaseContext(), "Включаем LED", Toast.LENGTH_SHORT).show();
-            }
-        });
-        */
-
-        /*
-        btnOffAll.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                mConnectedThread.write("0");
-                //Toast.makeText(getBaseContext(), "Выключаем LED", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        btnSendPass.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mConnectedThread.write(String.valueOf(((TextView) findViewById(R.id.edPass)).getText()));
-            }
-        });
-        */
 
         tvRed = (TextView) findViewById(R.id.tvRed);
         tvGreen = (TextView) findViewById(R.id.tvGreen);
@@ -144,8 +170,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //to turn of showing the old color
         picker.setShowOldCenterColor(false);
 
-
-
         h = new Handler() {
             public void handleMessage(android.os.Message msg) {
                 switch (msg.what) {
@@ -157,7 +181,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (endOfLineIndex > 0) {                                            // если встречаем конец строки,
                             String sbprint = sb.substring(0, endOfLineIndex);               // то извлекаем строку
                             sb.delete(0, sb.length());                                      // и очищаем sb
-                            tvLog.setText(sbprint);
+                            //tvLog.setText(sbprint);
                             if(sbprint.startsWith("l")) {
                                 tvLeftDis.setText(sbprint.substring(1, sbprint.length()));
                             } else if(sbprint.startsWith("r")) {
@@ -216,9 +240,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mConnectedThread.start();
 
         if(isConnected) {
-            chBoxIsConn.setChecked(true);
+            tvState.setText("Соединение установлено");
+            tvState.setTextColor(Color.GREEN);
         } else {
-            chBoxIsConn.setChecked(false);
+            tvState.setText("Соединение НЕ установлено");
+            tvState.setTextColor(Color.RED);
         }
     }
 
@@ -259,22 +285,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         String com = null;
-        /*
-        switch (v.getId()) {
-            case R.id.btnUp:
-                com = "r456q";
-                break;
-            case R.id.btnDown:
-                com = "d";
-                break;
-            case R.id.btnLeft:
-                com = "l";
-                break;
-            case R.id.btnRight:
-                com = "r";
-                break;
-        }
-        */
         if(com != null) {
             mConnectedThread.write(com);
         }
@@ -402,4 +412,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } catch (IOException e) { }
         }
     }
+
+
+    protected Dialog onCreateDialog(int id) {
+        if (id == DIALOG_TIME) {
+            myHour = Integer.valueOf((new SimpleDateFormat("HH")).format(System.currentTimeMillis()));
+            myMinute = Integer.valueOf((new SimpleDateFormat("mm")).format(System.currentTimeMillis()));
+            TimePickerDialog tpd = new TimePickerDialog(this, myCallBack, myHour, myMinute, true);
+            return tpd;
+        }
+        return super.onCreateDialog(id);
+    }
+
+    TimePickerDialog.OnTimeSetListener myCallBack = new TimePickerDialog.OnTimeSetListener() {
+        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+            Toast.makeText(getApplicationContext(), String.valueOf(hourOfDay) + ":" + String.valueOf(minute), Toast.LENGTH_SHORT).show();
+
+            long date = System.currentTimeMillis();
+
+            SimpleDateFormat sdfHour = new SimpleDateFormat("HH");
+            SimpleDateFormat sdfMinute = new SimpleDateFormat("mm");
+            int h = Integer.valueOf(sdfHour.format(date));
+            int m = Integer.valueOf(sdfMinute.format(date));
+            Toast.makeText(getApplicationContext(), String.valueOf(h) + ":" + String.valueOf(m), Toast.LENGTH_SHORT).show();
+
+            int rrr = minute - m;
+            Log.d("TTime", "rrr = " + String.valueOf(rrr));
+            String tempTime = String.valueOf(rrr);
+            String time = null;
+            switch (tempTime.length()) {
+                case 1:
+                    time = "000";
+                    break;
+                case 2:
+                    time = "00";
+                    break;
+                case 3:
+                    time = "0";
+                    break;
+                case 4:
+                    time = "";
+                    break;
+                default:
+                    return;
+            }
+            time += tempTime + 't';
+            if(isConnected) {
+                Log.d("TTime", time);
+                mConnectedThread.write(time);
+            }
+
+        }
+    };
 }
